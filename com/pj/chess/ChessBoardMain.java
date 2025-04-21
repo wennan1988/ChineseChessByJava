@@ -1,63 +1,22 @@
 package com.pj.chess;
-import static com.pj.chess.ChessConstant.*; 
-
-import java.applet.Applet;
-import java.applet.AudioClip;
-import java.awt.BorderLayout;
-import java.awt.Button;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Frame;
-import java.awt.Graphics;
-import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.Panel;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import javax.imageio.ImageIO;
-import javax.swing.ButtonGroup;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JRadioButtonMenuItem;
-
-import sun.audio.AudioPlayer;
-import sun.audio.AudioStream;
 
 import com.pj.chess.chessmove.ChessMovePlay;
 import com.pj.chess.chessmove.MoveNode;
 import com.pj.chess.chessparam.ChessParam;
-import com.pj.chess.evaluate.EvaluateCompute; 
 import com.pj.chess.evaluate.EvaluateComputeMiddleGame;
 import com.pj.chess.zobrist.TranspositionTable;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.applet.Applet;
+import java.applet.AudioClip;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.net.URL;
+
+import static com.pj.chess.ChessConstant.*;
 
 public class ChessBoardMain extends JFrame {
 
@@ -92,11 +51,7 @@ public class ChessBoardMain extends JFrame {
 	ChessParam chessParamCont;
 	private static boolean isSound=false;
 	public void initHandler(){
-		String startFen="c6c5  rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR b - - 0 1";
-		
-//		String startFen="c6c5  9/CP2k4/9/9/9/9/9/9/9/4K4 b - - 0 1";
-//		Tools.parseFENtoBoardZobrist(fenStr);
-		startFen=readSaved();
+		String startFen=readSaved();
 		
 		String[] fenArray = Tools.fenToFENArray(startFen);
 		int[] boardTemp = Tools.parseFEN(fenArray[1]);
@@ -200,7 +155,7 @@ public class ChessBoardMain extends JFrame {
 		initHandler();
 		this.setJMenuBar(setJMenuBar());
 		
-		this.setSize(568, 680); 
+		this.setSize(568, 710);
 		this.setLocationRelativeTo(null);
 		this.setResizable(false);
 		this.setVisible(true);
@@ -421,8 +376,7 @@ public class ChessBoardMain extends JFrame {
 			// TODO Auto-generated method stub
 
 		}
-		
-		
+
 		public void mouseClicked(MouseEvent e) {
 			// TODO Auto-generated method stub
 			
@@ -435,7 +389,6 @@ public class ChessBoardMain extends JFrame {
 		
 		public void mouseExited(MouseEvent e) {
 			// TODO Auto-generated method stub
-			
 		}
 		
 		public void mousePressed(MouseEvent e) {
