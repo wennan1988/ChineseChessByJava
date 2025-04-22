@@ -4,8 +4,8 @@ import com.pj.chess.*;
 import com.pj.chess.chessmove.ChessMovePlay;
 import com.pj.chess.chessmove.MoveNode;
 import com.pj.chess.chessparam.ChessParam;
-import com.pj.chess.evaluate.EvaluateComputeMiddleGame;
 import com.pj.chess.zobrist.TranspositionTable;
+import org.wen.chess.Constant;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -14,35 +14,18 @@ import java.applet.AudioClip;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.IOException;
 import java.net.URL;
 
 import static com.pj.chess.ChessConstant.*;
-import static com.pj.chess.ChessConstant.BLACKPLAYSIGN;
-import static com.pj.chess.ChessConstant.LONGCHECKSCORE;
-import static com.pj.chess.ChessConstant.NOTHING;
-import static com.pj.chess.ChessConstant.REDPLAYSIGN;
-import static com.pj.chess.ChessConstant.boardCol;
-import static com.pj.chess.ChessConstant.boardRow;
-import static com.pj.chess.ChessConstant.chessPlay;
-import static com.pj.chess.ChessConstant.maxScore;
 
 final class Board extends JFrame {
 
     private static final long serialVersionUID = 1L;
-    public static final String[] chessName = new String[]{
-            "   ", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-            "黑将", "黑车", "黑车", "黑马", "黑马", "黑炮", "黑炮", "黑象", "黑象", "黑士", "黑士", "黑卒", "黑卒", "黑卒", "黑卒", "黑卒",
-            "红将", "红车", "红车", "红马", "红马", "红炮", "红炮", "红象", "红象", "红士", "红士", "红卒", "红卒", "红卒", "红卒", "红卒",
-    };
-    public static final String[] chessIcon = new String[]{
-            null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-            "BK", "BR", "BR", "BN", "BN", "BC", "BC", "BB", "BB", "BA", "BA", "BP", "BP", "BP", "BP", "BP",
-            "RK", "RR", "RR", "RN", "RN", "RC", "RC", "RB", "RB", "RA", "RA", "RP", "RP", "RP", "RP", "RP",
-    };
+
     int lastTimeCheckedSite = -1; //上次选中棋子的位置
-    private ButtonActionListener my = new ButtonActionListener();
-    JLabel[] buttons = new JLabel[BOARDSIZE90];
+    private final ButtonActionListener my = new ButtonActionListener();
+    JLabel[] buttons = new JLabel[Constant.BOARDSIZE90];
     int play = 1;
     volatile boolean[] android = new boolean[]{false, false};
     int begin = -1;
@@ -59,32 +42,6 @@ final class Board extends JFrame {
     int turn_num = 0;//回合数
     ChessParam chessParamCont;
     private static boolean isSound = false;
-
-    public void initHandler() {
-        String startFen = readSaved();
-
-        String[] fenArray = Tools.fenToFENArray(startFen);
-        int[] boardTemp = Tools.parseFEN(fenArray[1]);
-        //根据棋盘初始参数
-        chessParamCont = ChessInitialize.getGlobalChessParam(boardTemp);
-        //清除所有界面图片
-//		clearBoardIcon();
-        //初始界面棋子
-        for (int i = 0; i < boardTemp.length; i++) {
-            if (boardTemp[i] > 0) {
-                this.setBoardIconUnchecked(i, boardTemp[i]);
-            }
-        }
-
-        //初始局面(要把棋子摆好后才能计算局面值)
-        transTable = new TranspositionTable();
-        if (moveHistory == null) {
-            moveHistory = new NodeLink(1 - play, transTable.boardZobrist32, transTable.boardZobrist64);
-        }
-        play = 1 - moveHistory.play;
-        android[1 - play] = true;
-        cmp = new ChessMovePlay(chessParamCont, transTable, new EvaluateComputeMiddleGame(chessParamCont));
-    }
 
     JPanel jpanelContent;
 
@@ -148,24 +105,22 @@ final class Board extends JFrame {
         this.add(jpanelContent, BorderLayout.CENTER);
     }
 
-    public Board() {
+    Board() {
         super("新中国象棋");
         setCenter();
 
-        JPanel constrol = new JPanel();
-        constrol.setLayout(new GridLayout(1, 3));
+        JPanel control = new JPanel();
+        control.setLayout(new GridLayout(1, 3));
 
         Button button = new Button("悔棋");
         button.addActionListener(my);
         Button computerMove = new Button("立即走棋");
         computerMove.addActionListener(my);
-        constrol.add(button);
-        constrol.add(computerMove);
-        this.add(constrol, BorderLayout.SOUTH);
+        control.add(button);
+        control.add(computerMove);
+        this.add(control, BorderLayout.SOUTH);
 
         this.addWindowListener(my);
-        //初始处理器
-        initHandler();
         this.setJMenuBar(setJMenuBar());
 
         this.setSize(568, 710);
@@ -174,7 +129,7 @@ final class Board extends JFrame {
         this.setVisible(true);
     }
 
-    private MenuItemActionListener menuItemAction = new MenuItemActionListener();
+    private final MenuItemActionListener menuItemAction = new MenuItemActionListener();
     JRadioButtonMenuItem hashSize2M = new JRadioButtonMenuItem("HASH表小", true);
     JRadioButtonMenuItem hashSize32M = new JRadioButtonMenuItem("HASH表中", false);
     JRadioButtonMenuItem hashSize64M = new JRadioButtonMenuItem("HASH表大", false);
@@ -258,40 +213,33 @@ final class Board extends JFrame {
         return jmb;
     }
 
+    void setChessPieces(char[] boardData) {
+
+        for (int i = 0; i < boardData.length; i++) {
+            if ('\u0000' == boardData[i]) {
+                buttons[i].setIcon(null);
+            } else {
+                buttons[i].setIcon(getImageIcon(boardData[i]));
+            }
+        }
+    }
+
     public void setBoardIconUnchecked(int site, int chess) {
 //		site=boardMap[site];
 //		initBoardRelation(site,chess);
         if (chess == NOTHING) {
             buttons[site].setIcon(null);
         } else {
-            buttons[site].setIcon(getImageIcon(chessIcon[chess]));
+            buttons[site].setIcon(getImageIcon(Constant.chessIcon[chess]));
         }
     }
 
     public void setBoardIconChecked(int site, int chess) {
-        buttons[site].setIcon(getImageIcon(chessIcon[chess] + "S"));
+        buttons[site].setIcon(getImageIcon(Constant.chessIcon[chess] + "S"));
     }
 
     public void setCheckedLOSS(int play) {
-        buttons[chessParamCont.allChess[chessPlay[play]]].setIcon(getImageIcon(chessIcon[chessPlay[play]] + "M"));
-    }
-
-    public void clearBoardIcon() {
-        for (int i = 0; i < buttons.length; i++) {
-            buttons[i].setIcon(null);
-        }
-    }
-
-    public void initBoardRelation(int destSite, int chess) {
-
-        chessParamCont.board[destSite] = chess;
-        chessParamCont.allChess[chess] = destSite;
-
-        int destRow = boardRow[destSite];
-        int destCol = boardCol[destSite];
-        chessParamCont.boardBitRow[destRow] |= (1 << (8 - destCol));
-        chessParamCont.boardBitCol[destCol] |= (1 << (9 - destRow));
-
+        buttons[chessParamCont.allChess[chessPlay[play]]].setIcon(getImageIcon(Constant.chessIcon[chessPlay[play]] + "M"));
     }
 
     public void move(MoveNode moveNode) {
@@ -304,28 +252,27 @@ final class Board extends JFrame {
         lastTimeCheckedSite = moveNode.destSite;
     }
 
-    class ButtonActionListener implements ActionListener, WindowListener, MouseListener {
+    class ButtonActionListener   implements ActionListener, WindowListener,MouseListener {
         public void actionPerformed(ActionEvent e) {
-            Button sour = (Button) e.getSource();
-            if (sour.getLabel().equals("悔棋")) {
-                if (moveHistory.getMoveNode() != null) {
-                    MoveNode moveNode = moveHistory.getMoveNode();
+            Button sour = (Button)e.getSource();
+            if(sour.getLabel().equals("悔棋")){
+                if(moveHistory.getMoveNode()!=null ){
+                    MoveNode moveNode=moveHistory.getMoveNode();
                     unMoveNode(moveNode);
-                    moveHistory = moveHistory.getLastLink();
+                    moveHistory=moveHistory.getLastLink();
                     turn_num--;
-                    play = 1 - play; //交换双方
+                    play=1-play; //交换双方
                 }
-            } else if (sour.getLabel().equals("立即走棋")) {
-                if (_AIThink != null) {
+            }else if(sour.getLabel().equals("立即走棋")){
+                if(_AIThink!=null){
                     _AIThink.setStop();
                 }
             }
 
 
         }
-
-        private boolean checkZFPath(int srcSite, int destSite, int play) {
-            if (chessParamCont.board[srcSite] == NOTHING) {
+        private boolean checkZFPath(int srcSite,int destSite,int play){
+            if(chessParamCont.board[srcSite]==NOTHING){
                 return false;
             }
 //			int row=chessParamCont.boardBitRow[boardRow[srcSite]];
@@ -336,37 +283,34 @@ final class Board extends JFrame {
 			System.out.println(bt);*/
 //			System.out.println("车或炮的机动性为->>"+(ChariotAndGunMobilityRow[srcSite][row]+ChariotAndGunMobilityCol[srcSite][col]));
 
-            MoveNode moveNode = new MoveNode(srcSite, destSite, chessParamCont.board[srcSite], chessParamCont.board[destSite], 0);
-            return cmp.legalMove(play, moveNode);
+            MoveNode moveNode = new MoveNode(srcSite,destSite,chessParamCont.board[srcSite],chessParamCont.board[destSite],0);
+            return cmp.legalMove(play,moveNode);
         }
-
-        private void unMoveNode(MoveNode moveNode) {
-            MoveNode unmoveNode = new MoveNode();
-            unmoveNode.srcChess = moveNode.destChess;
-            unmoveNode.srcSite = moveNode.destSite;
-            unmoveNode.destChess = moveNode.srcChess;
-            unmoveNode.destSite = moveNode.srcSite;
+        private void unMoveNode(MoveNode moveNode){
+            MoveNode unmoveNode=new MoveNode();
+            unmoveNode.srcChess=moveNode.destChess;
+            unmoveNode.srcSite=moveNode.destSite;
+            unmoveNode.destChess=moveNode.srcChess;
+            unmoveNode.destSite=moveNode.srcSite;
             unMove(unmoveNode);
             cmp.unMoveOperate(moveNode);
         }
-
-        private void unMove(MoveNode moveNode) {
-            if (lastTimeCheckedSite != -1) {
-                setBoardIconUnchecked(lastTimeCheckedSite, chessParamCont.board[lastTimeCheckedSite]);
+        private void unMove(MoveNode moveNode){
+            if(lastTimeCheckedSite!=-1){
+                setBoardIconUnchecked(lastTimeCheckedSite,chessParamCont.board[lastTimeCheckedSite]);
             }
-            if (moveNode.srcChess == NOTHING) {
+            if(moveNode.srcChess==NOTHING){
                 buttons[moveNode.srcSite].setIcon(null);
-            } else {
-                setBoardIconUnchecked(moveNode.srcSite, moveNode.srcChess);
+            }else{
+                setBoardIconUnchecked(moveNode.srcSite,moveNode.srcChess);
             }
-            if (moveNode.destChess == NOTHING) {
+            if(moveNode.destChess==NOTHING){
                 buttons[moveNode.destChess].setIcon(null);
-            } else {
-                setBoardIconChecked(moveNode.destSite, moveNode.destChess);
+            }else{
+                setBoardIconChecked(moveNode.destSite,moveNode.destChess);
             }
-            lastTimeCheckedSite = moveNode.destSite;
+            lastTimeCheckedSite=moveNode.destSite;
         }
-
         public void windowActivated(WindowEvent arg0) {
             // TODO Auto-generated method stub
 
@@ -417,27 +361,27 @@ final class Board extends JFrame {
         }
 
         public void mousePressed(MouseEvent e) {
-            if (android[play]) {
+            if(android[play]){
                 return;
             }
             for (int i = 0; i < buttons.length; i++) {
                 JLabel p = buttons[i];
-                if (p == e.getSource()) {
-                    if (chessParamCont.board[i] != NOTHING && (chessParamCont.board[i] & chessPlay[play]) == chessPlay[play]) {//自方子力
-                        if (i != begin) {
-                            begin = i;
+                if(p==e.getSource()){
+                    if(chessParamCont.board[i]!=NOTHING &&  (chessParamCont.board[i]&chessPlay[play])==chessPlay[play]){//自方子力
+                        if(i!=begin){
+                            begin=i;
 
-                            setBoardIconChecked(i, chessParamCont.board[i]);
-                            if (lastTimeCheckedSite != -1) {
-                                setBoardIconUnchecked(lastTimeCheckedSite, chessParamCont.board[lastTimeCheckedSite]);
+                            setBoardIconChecked(i,chessParamCont.board[i]);
+                            if(lastTimeCheckedSite!=-1){
+                                setBoardIconUnchecked(lastTimeCheckedSite,chessParamCont.board[lastTimeCheckedSite]);
                             }
-                            lastTimeCheckedSite = begin;
+                            lastTimeCheckedSite=begin;
                         }
                         return;
-                    } else if (begin == -1) {
+                    }else if(begin==-1){
                         return;
                     }
-                    end = i;
+                    end=i;
                     if (this.checkZFPath(begin, end, play)) {
                         MoveNode moveNode = new MoveNode(begin, end, chessParamCont.board[begin], chessParamCont.board[end], 0);
                         showMoveNode(moveNode);
@@ -469,9 +413,25 @@ final class Board extends JFrame {
         }
     }
 
-    private ImageIcon getImageIcon(String chessName) {
+    private ImageIcon getImageIcon(char chess) {
+        String chessName = null;
+
+        if ('a' <= chess && chess <= 'z') {
+            chessName = "B" + String.valueOf(chess).toUpperCase();
+        }
+
+        if ('A' <= chess && chess <= 'Z') {
+            chessName = "R" + String.valueOf(chess).toUpperCase();
+        }
+
         String path = "/images/" + chessName + ".GIF";
-        ImageIcon imageIcon = new ImageIcon(getClass().getResource(path));
+        return new ImageIcon(getClass().getResource(path));
+    }
+
+    // TODO
+    private ImageIcon getImageIcon(String chessName){
+        String path="/images/"+chessName+".GIF";
+        ImageIcon  imageIcon=new  ImageIcon(getClass().getResource(path));
         return imageIcon;
     }
 
@@ -692,55 +652,6 @@ final class Board extends JFrame {
         hashSize2M.setEnabled(false);
         hashSize32M.setEnabled(false);
         hashSize64M.setEnabled(false);
-    }
-
-    /*
-     * 记取上次保存记录
-     */
-    public String readSaved() {
-        String fen = null;
-        FileInputStream fileInput = null;
-        try {
-            File chessFile = new File("chess.txt");
-            fileInput = new java.io.FileInputStream(chessFile);
-            BufferedReader bufferedReader = new BufferedReader(
-                    new java.io.InputStreamReader(fileInput));
-
-            while (bufferedReader.ready()) {
-                fen = bufferedReader.readLine();
-            }
-            if (fen != null) {
-                if (JOptionPane.showConfirmDialog(this, "检测到有存档是否继续上次游戏?", "信息",
-                        JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                    ObjectInputStream objInput = null;
-                    try {
-                        objInput = new ObjectInputStream(new FileInputStream("moves.dat"));
-                        moveHistory = (NodeLink) objInput.readObject();
-                        turn_num = 20;
-                    } catch (Exception e) {
-                        System.err.println("========读取历史记录出错 moves.dat");
-                    } finally {
-                        if (objInput != null) {
-                            objInput.close();
-                        }
-                    }
-                } else {
-                    chessFile.deleteOnExit();
-                    fen = "c6c5  rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR b - - 0 1";
-                }
-            }
-        } catch (Exception e) {
-            fen = "c6c5  rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR b - - 0 1";
-        } finally {
-            if (fileInput != null) {
-                try {
-                    fileInput.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return fen;
     }
 
     public void launchSound(int type) {

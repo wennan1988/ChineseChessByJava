@@ -2,8 +2,8 @@ package org.wen.chess.ui;
 
 import com.pj.chess.ChessInitialize;
 import com.pj.chess.NodeLink;
-import com.pj.chess.Tools;
 import com.pj.chess.chessmove.ChessMovePlay;
+import com.pj.chess.chessparam.ChessParam;
 import com.pj.chess.evaluate.EvaluateComputeMiddleGame;
 import com.pj.chess.zobrist.TranspositionTable;
 import org.wen.chess.Constant;
@@ -11,29 +11,31 @@ import org.wen.chess.Constant;
 /**
  * 棋局控制逻辑
  */
-public class Match {
+public class Game {
+
+    TranspositionTable transTable;
+
+    NodeLink moveHistory;
+
+    int play = 1;
+
+    volatile boolean[] android = new boolean[]{false, false};
+
+    ChessMovePlay cmp = null;
+
     public static void main(String[] args) {
-        new Board();
+        new Game().initialize();
     }
 
     /**
      * 棋局初始化
      */
     private void initialize() {
-        String savedMatch = readSaved();
 
-        String[] fenArray = Tools.fenToFENArray(savedMatch);
-        int[] boardTemp = Tools.parseFEN(fenArray[1]);
-        //根据棋盘初始参数
-        chessParamCont = ChessInitialize.getGlobalChessParam(boardTemp);
-        //清除所有界面图片
-//		clearBoardIcon();
+        char[] boardTemp = readSaved();
+
         //初始界面棋子
-        for (int i = 0; i < boardTemp.length; i++) {
-            if (boardTemp[i] > 0) {
-                this.setBoardIconUnchecked(i, boardTemp[i]);
-            }
-        }
+        new Board().setChessPieces(boardTemp);
 
         //初始局面(要把棋子摆好后才能计算局面值)
         transTable = new TranspositionTable();
@@ -42,13 +44,12 @@ public class Match {
         }
         play = 1 - moveHistory.play;
         android[1 - play] = true;
-        cmp = new ChessMovePlay(chessParamCont, transTable, new EvaluateComputeMiddleGame(chessParamCont));
     }
 
     /*
      * 读取上次保存记录
      */
-    private String readSaved() {
+    private char[] readSaved() {
 
         // TODO
 //        String fen = null;
@@ -70,6 +71,22 @@ public class Match {
 //                }
 //            }
 //        }
-        return Constant.DEFAULT_MATCH;
+        String data = Constant.DEFAULT_MATCH;
+
+        char[] board=new char[90];
+        int boardIndex = 0;
+        
+        int i=0;
+        while(data.length()>i){
+            if(Character.isAlphabetic(data.charAt(i))){
+
+                board[boardIndex]=data.charAt(i);
+                boardIndex++;
+            }else if(Character.isDigit(data.charAt(i))){
+                boardIndex+= Integer.parseInt(String.valueOf(data.charAt(i)));
+            }
+            i++;
+        }
+        return board;
     }
 }
