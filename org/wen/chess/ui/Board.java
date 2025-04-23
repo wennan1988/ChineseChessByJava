@@ -19,7 +19,7 @@ import java.net.URL;
 
 import static com.pj.chess.ChessConstant.*;
 
-final class Board extends JFrame {
+public final class Board extends JFrame {
 
     private static final long serialVersionUID = 1L;
 
@@ -43,13 +43,13 @@ final class Board extends JFrame {
     ChessParam chessParamCont;
     private static boolean isSound = false;
 
-    JPanel jpanelContent;
+    JPanel jPanelContent;
 
-    private void setCenter() {
-        if (jpanelContent != null) {
-            this.remove(jpanelContent);
+    private void setCenter(char[] boardData) {
+        if (jPanelContent != null) {
+            this.remove(jPanelContent);
         }
-        jpanelContent = new javax.swing.JPanel() {
+        jPanelContent = new javax.swing.JPanel() {
             protected void paintComponent(Graphics g) {
                 try {
                     BufferedImage img = ImageIO.read(getClass().getResource("/images/MAIN.GIF"));
@@ -61,53 +61,92 @@ final class Board extends JFrame {
         };
         this.setLayout(new BorderLayout());
 
-        JPanel panel = new javax.swing.JPanel();
-
-        jpanelContent.setLayout(new BorderLayout());
+        jPanelContent.setLayout(new BorderLayout());
         //北
         JPanel jpNorth = new JPanel();
         jpNorth.setPreferredSize(new Dimension(25, 25));
 //		jpNorth.setBackground(Color.white);
         jpNorth.setOpaque(false);
-        jpanelContent.add(jpNorth, BorderLayout.NORTH);
+        jPanelContent.add(jpNorth, BorderLayout.NORTH);
         //南
         JPanel jpSouth = new JPanel();
         jpSouth.setPreferredSize(new Dimension(5, 5));
         jpSouth.setBackground(Color.black);
         jpSouth.setOpaque(false);
-        jpanelContent.add(jpSouth, BorderLayout.SOUTH);
+        jPanelContent.add(jpSouth, BorderLayout.SOUTH);
         //西
         JPanel jpWest = new JPanel();
         jpWest.setPreferredSize(new Dimension(20, 20));
         jpWest.setBackground(Color.blue);
         jpWest.setOpaque(false);
-        jpanelContent.add(jpWest, BorderLayout.WEST);
+        jPanelContent.add(jpWest, BorderLayout.WEST);
         //东
         JPanel jpEast = new JPanel();
         jpEast.setPreferredSize(new Dimension(20, 20));
         jpEast.setBackground(Color.CYAN);
         jpEast.setOpaque(false);
-        jpanelContent.add(jpEast, BorderLayout.EAST);
+        jPanelContent.add(jpEast, BorderLayout.EAST);
+
         //中
+        JPanel panel  = new javax.swing.JPanel();
         panel.setLayout(new GridLayout(10, 9));
         panel.setPreferredSize(new Dimension(100, 100));
         panel.setOpaque(false);
-        jpanelContent.add(panel, BorderLayout.CENTER);
 
-        for (int i = 0; i < BOARDSIZE90; i++) {
-            JLabel p = new JLabel();
-            p.addMouseListener(my);
-            p.setBackground(Color.red);
-            p.setSize(55, 55);
-            buttons[i] = p;
-            panel.add(p);
+        for (int i = 0; i < boardData.length; i++) {
+            if ('\u0000' != boardData[i]) {
+//                buttons[i].setIcon(getImageIcon(boardData[i]));
+                JLabel p = null;
+
+                switch (boardData[i]) {
+                    case 'r':
+                    case 'R':
+                            p = new Chariot();
+                            break;
+                    case 'n':
+                    case 'N':
+                        p = new Horse();
+                        break;
+                    case 'b':
+                    case 'B':
+                        p = new Elephant();
+                        break;
+                    case 'a':
+                    case 'A':
+                        p = new Guardian();
+                        break;
+                    case 'k':
+                    case 'K':
+                        p = new General();
+                        break;
+                    case 'c':
+                    case 'C':
+                        p = new Cannon();
+                        break;
+                    case 'p':
+                    case 'P':
+                        p = new Soldier();
+                        break;
+                    default:
+                        throw new RuntimeException("unexcepted chess piece!");
+                }
+
+                p.setIcon(getImageIcon(boardData[i]));
+                p.addMouseListener(new EventListener());
+                p.setBackground(Color.red);
+                p.setSize(55, 55);
+                panel.add(p);
+            }
         }
-        this.add(jpanelContent, BorderLayout.CENTER);
+
+        jPanelContent.add(panel, BorderLayout.CENTER);
+
+        this.add(jPanelContent, BorderLayout.CENTER);
     }
 
-    Board() {
+    public Board(char[] boardData) {
         super("新中国象棋");
-        setCenter();
+        setCenter(boardData);
 
         JPanel control = new JPanel();
         control.setLayout(new GridLayout(1, 3));
@@ -213,17 +252,6 @@ final class Board extends JFrame {
         return jmb;
     }
 
-    void setChessPieces(char[] boardData) {
-
-        for (int i = 0; i < boardData.length; i++) {
-            if ('\u0000' == boardData[i]) {
-                buttons[i].setIcon(null);
-            } else {
-                buttons[i].setIcon(getImageIcon(boardData[i]));
-            }
-        }
-    }
-
     public void setBoardIconUnchecked(int site, int chess) {
 //		site=boardMap[site];
 //		initBoardRelation(site,chess);
@@ -252,7 +280,7 @@ final class Board extends JFrame {
         lastTimeCheckedSite = moveNode.destSite;
     }
 
-    class ButtonActionListener   implements ActionListener, WindowListener,MouseListener {
+    class ButtonActionListener implements ActionListener, WindowListener,MouseListener {
         public void actionPerformed(ActionEvent e) {
             Button sour = (Button)e.getSource();
             if(sour.getLabel().equals("悔棋")){
@@ -268,9 +296,8 @@ final class Board extends JFrame {
                     _AIThink.setStop();
                 }
             }
-
-
         }
+
         private boolean checkZFPath(int srcSite,int destSite,int play){
             if(chessParamCont.board[srcSite]==NOTHING){
                 return false;

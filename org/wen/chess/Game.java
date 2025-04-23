@@ -1,12 +1,9 @@
-package org.wen.chess.ui;
+package org.wen.chess;
 
-import com.pj.chess.ChessInitialize;
 import com.pj.chess.NodeLink;
 import com.pj.chess.chessmove.ChessMovePlay;
-import com.pj.chess.chessparam.ChessParam;
-import com.pj.chess.evaluate.EvaluateComputeMiddleGame;
 import com.pj.chess.zobrist.TranspositionTable;
-import org.wen.chess.Constant;
+import org.wen.chess.ui.Board;
 
 /**
  * 棋局控制逻辑
@@ -35,7 +32,7 @@ public class Game {
         char[] boardTemp = readSaved();
 
         //初始界面棋子
-        new Board().setChessPieces(boardTemp);
+        new Board(boardTemp);
 
         //初始局面(要把棋子摆好后才能计算局面值)
         transTable = new TranspositionTable();
