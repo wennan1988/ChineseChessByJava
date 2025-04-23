@@ -70,7 +70,7 @@ public final class Board extends JFrame {
         jPanelContent.add(jpNorth, BorderLayout.NORTH);
         //南
         JPanel jpSouth = new JPanel();
-        jpSouth.setPreferredSize(new Dimension(5, 5));
+        jpSouth.setPreferredSize(new Dimension(25, 25));
         jpSouth.setBackground(Color.black);
         jpSouth.setOpaque(false);
         jPanelContent.add(jpSouth, BorderLayout.SOUTH);
@@ -88,55 +88,22 @@ public final class Board extends JFrame {
         jPanelContent.add(jpEast, BorderLayout.EAST);
 
         //中
-        JPanel panel  = new javax.swing.JPanel();
+        JPanel panel = new javax.swing.JPanel();
         panel.setLayout(new GridLayout(10, 9));
         panel.setPreferredSize(new Dimension(100, 100));
         panel.setOpaque(false);
 
         for (int i = 0; i < boardData.length; i++) {
+            JLabel p = ChessPieceFactory.createChessPiece(boardData[i]);
+
             if ('\u0000' != boardData[i]) {
-//                buttons[i].setIcon(getImageIcon(boardData[i]));
-                JLabel p = null;
-
-                switch (boardData[i]) {
-                    case 'r':
-                    case 'R':
-                            p = new Chariot();
-                            break;
-                    case 'n':
-                    case 'N':
-                        p = new Horse();
-                        break;
-                    case 'b':
-                    case 'B':
-                        p = new Elephant();
-                        break;
-                    case 'a':
-                    case 'A':
-                        p = new Guardian();
-                        break;
-                    case 'k':
-                    case 'K':
-                        p = new General();
-                        break;
-                    case 'c':
-                    case 'C':
-                        p = new Cannon();
-                        break;
-                    case 'p':
-                    case 'P':
-                        p = new Soldier();
-                        break;
-                    default:
-                        throw new RuntimeException("unexcepted chess piece!");
-                }
-
                 p.setIcon(getImageIcon(boardData[i]));
                 p.addMouseListener(new EventListener());
-                p.setBackground(Color.red);
-                p.setSize(55, 55);
-                panel.add(p);
             }
+
+            p.setBackground(Color.red);
+            p.setSize(55, 55);
+            panel.add(p);
         }
 
         jPanelContent.add(panel, BorderLayout.CENTER);
@@ -280,26 +247,27 @@ public final class Board extends JFrame {
         lastTimeCheckedSite = moveNode.destSite;
     }
 
-    class ButtonActionListener implements ActionListener, WindowListener,MouseListener {
+    class ButtonActionListener implements ActionListener, WindowListener, MouseListener {
+        @Override
         public void actionPerformed(ActionEvent e) {
-            Button sour = (Button)e.getSource();
-            if(sour.getLabel().equals("悔棋")){
-                if(moveHistory.getMoveNode()!=null ){
-                    MoveNode moveNode=moveHistory.getMoveNode();
+            Button sour = (Button) e.getSource();
+            if (sour.getLabel().equals("悔棋")) {
+                if (moveHistory.getMoveNode() != null) {
+                    MoveNode moveNode = moveHistory.getMoveNode();
                     unMoveNode(moveNode);
-                    moveHistory=moveHistory.getLastLink();
+                    moveHistory = moveHistory.getLastLink();
                     turn_num--;
-                    play=1-play; //交换双方
+                    play = 1 - play; //交换双方
                 }
-            }else if(sour.getLabel().equals("立即走棋")){
-                if(_AIThink!=null){
+            } else if (sour.getLabel().equals("立即走棋")) {
+                if (_AIThink != null) {
                     _AIThink.setStop();
                 }
             }
         }
 
-        private boolean checkZFPath(int srcSite,int destSite,int play){
-            if(chessParamCont.board[srcSite]==NOTHING){
+        private boolean checkZFPath(int srcSite, int destSite, int play) {
+            if (chessParamCont.board[srcSite] == NOTHING) {
                 return false;
             }
 //			int row=chessParamCont.boardBitRow[boardRow[srcSite]];
@@ -310,105 +278,119 @@ public final class Board extends JFrame {
 			System.out.println(bt);*/
 //			System.out.println("车或炮的机动性为->>"+(ChariotAndGunMobilityRow[srcSite][row]+ChariotAndGunMobilityCol[srcSite][col]));
 
-            MoveNode moveNode = new MoveNode(srcSite,destSite,chessParamCont.board[srcSite],chessParamCont.board[destSite],0);
-            return cmp.legalMove(play,moveNode);
+            MoveNode moveNode = new MoveNode(srcSite, destSite, chessParamCont.board[srcSite], chessParamCont.board[destSite], 0);
+            return cmp.legalMove(play, moveNode);
         }
-        private void unMoveNode(MoveNode moveNode){
-            MoveNode unmoveNode=new MoveNode();
-            unmoveNode.srcChess=moveNode.destChess;
-            unmoveNode.srcSite=moveNode.destSite;
-            unmoveNode.destChess=moveNode.srcChess;
-            unmoveNode.destSite=moveNode.srcSite;
+
+        private void unMoveNode(MoveNode moveNode) {
+            MoveNode unmoveNode = new MoveNode();
+            unmoveNode.srcChess = moveNode.destChess;
+            unmoveNode.srcSite = moveNode.destSite;
+            unmoveNode.destChess = moveNode.srcChess;
+            unmoveNode.destSite = moveNode.srcSite;
             unMove(unmoveNode);
             cmp.unMoveOperate(moveNode);
         }
-        private void unMove(MoveNode moveNode){
-            if(lastTimeCheckedSite!=-1){
-                setBoardIconUnchecked(lastTimeCheckedSite,chessParamCont.board[lastTimeCheckedSite]);
+
+        private void unMove(MoveNode moveNode) {
+            if (lastTimeCheckedSite != -1) {
+                setBoardIconUnchecked(lastTimeCheckedSite, chessParamCont.board[lastTimeCheckedSite]);
             }
-            if(moveNode.srcChess==NOTHING){
+            if (moveNode.srcChess == NOTHING) {
                 buttons[moveNode.srcSite].setIcon(null);
-            }else{
-                setBoardIconUnchecked(moveNode.srcSite,moveNode.srcChess);
+            } else {
+                setBoardIconUnchecked(moveNode.srcSite, moveNode.srcChess);
             }
-            if(moveNode.destChess==NOTHING){
+            if (moveNode.destChess == NOTHING) {
                 buttons[moveNode.destChess].setIcon(null);
-            }else{
-                setBoardIconChecked(moveNode.destSite,moveNode.destChess);
+            } else {
+                setBoardIconChecked(moveNode.destSite, moveNode.destChess);
             }
-            lastTimeCheckedSite=moveNode.destSite;
+            lastTimeCheckedSite = moveNode.destSite;
         }
+
+        @Override
         public void windowActivated(WindowEvent arg0) {
             // TODO Auto-generated method stub
 
         }
 
+        @Override
         public void windowClosed(WindowEvent arg0) {
             // TODO Auto-generated method stub
 
         }
 
+        @Override
         public void windowClosing(WindowEvent arg0) {
             // TODO Auto-generated method stub
             System.exit(1);
         }
 
+        @Override
         public void windowDeactivated(WindowEvent arg0) {
             // TODO Auto-generated method stub
 
         }
 
+        @Override
         public void windowDeiconified(WindowEvent arg0) {
             // TODO Auto-generated method stub
 
         }
 
+        @Override
         public void windowIconified(WindowEvent arg0) {
             // TODO Auto-generated method stub
 
         }
 
+        @Override
         public void windowOpened(WindowEvent arg0) {
             // TODO Auto-generated method stub
 
         }
 
+        @Override
         public void mouseClicked(MouseEvent e) {
             // TODO Auto-generated method stub
 
         }
 
+        @Override
         public void mouseEntered(MouseEvent e) {
             // TODO Auto-generated method stub
 
         }
 
+        @Override
         public void mouseExited(MouseEvent e) {
             // TODO Auto-generated method stub
         }
 
+        @Override
         public void mousePressed(MouseEvent e) {
-            if(android[play]){
+            if (android[play]) {
                 return;
             }
             for (int i = 0; i < buttons.length; i++) {
                 JLabel p = buttons[i];
-                if(p==e.getSource()){
-                    if(chessParamCont.board[i]!=NOTHING &&  (chessParamCont.board[i]&chessPlay[play])==chessPlay[play]){//自方子力
-                        if(i!=begin){
-                            begin=i;
+                if (p == e.getSource()) {
+                    if (chessParamCont.board[i] != NOTHING && (chessParamCont.board[i] & chessPlay[play]) == chessPlay[play]) {//自方子力
+                        if (i != begin) {
+                            begin = i;
 
-                            setBoardIconChecked(i,chessParamCont.board[i]);
-                            if(lastTimeCheckedSite!=-1){
-                                setBoardIconUnchecked(lastTimeCheckedSite,chessParamCont.board[lastTimeCheckedSite]);
+                            setBoardIconChecked(i, chessParamCont.board[i]);
+                            if (lastTimeCheckedSite != -1) {
+                                setBoardIconUnchecked(lastTimeCheckedSite, chessParamCont.board[lastTimeCheckedSite]);
                             }
-                            lastTimeCheckedSite=begin;
+                            lastTimeCheckedSite = begin;
                         }
                         return;
-                    }else if(begin==-1){
+                    } else if (begin == -1) {
                         return;
                     }
-                    end=i;
+                    end = i;
                     if (this.checkZFPath(begin, end, play)) {
                         MoveNode moveNode = new MoveNode(begin, end, chessParamCont.board[begin], chessParamCont.board[end], 0);
                         showMoveNode(moveNode);
@@ -424,6 +406,7 @@ public final class Board extends JFrame {
 
         }
 
+        @Override
         public void mouseReleased(MouseEvent e) {
             // TODO Auto-generated method stub
 
@@ -441,6 +424,7 @@ public final class Board extends JFrame {
     }
 
     private ImageIcon getImageIcon(char chess) {
+
         String chessName = null;
 
         if ('a' <= chess && chess <= 'z') {
@@ -456,9 +440,9 @@ public final class Board extends JFrame {
     }
 
     // TODO
-    private ImageIcon getImageIcon(String chessName){
-        String path="/images/"+chessName+".GIF";
-        ImageIcon  imageIcon=new  ImageIcon(getClass().getResource(path));
+    private ImageIcon getImageIcon(String chessName) {
+        String path = "/images/" + chessName + ".GIF";
+        ImageIcon imageIcon = new ImageIcon(getClass().getResource(path));
         return imageIcon;
     }
 
@@ -510,6 +494,7 @@ public final class Board extends JFrame {
     }
 
     class MenuItemActionListener implements ActionListener {
+        @Override
         public void actionPerformed(ActionEvent e) {
             String actionCommand = e.getActionCommand();
             if ("新建".equals(actionCommand)) {
@@ -722,6 +707,7 @@ public final class Board extends JFrame {
             }
         }
 
+        @Override
         public void run() {
             AudioClip clip = Applet.newAudioClip(url);
             clip.play();
