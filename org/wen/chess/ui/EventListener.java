@@ -17,7 +17,20 @@ class EventListener implements ActionListener, WindowListener, MouseListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-
+//        Button sour = (Button) e.getSource();
+//        if (sour.getLabel().equals("悔棋")) {
+//            if (moveHistory.getMoveNode() != null) {
+//                MoveNode moveNode = moveHistory.getMoveNode();
+//                unMoveNode(moveNode);
+//                moveHistory = moveHistory.getLastLink();
+//                turn_num--;
+//                play = 1 - play; //交换双方
+//            }
+//        } else if (sour.getLabel().equals("立即走棋")) {
+//            if (_AIThink != null) {
+//                _AIThink.setStop();
+//            }
+//        }
     }
 
     @Override

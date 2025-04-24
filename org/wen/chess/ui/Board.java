@@ -24,7 +24,7 @@ public final class Board extends JFrame {
     private static final long serialVersionUID = 1L;
 
     int lastTimeCheckedSite = -1; //上次选中棋子的位置
-    private final ButtonActionListener my = new ButtonActionListener();
+
     JLabel[] buttons = new JLabel[Constant.BOARDSIZE90];
     int play = 1;
     volatile boolean[] android = new boolean[]{false, false};
@@ -118,15 +118,16 @@ public final class Board extends JFrame {
         JPanel control = new JPanel();
         control.setLayout(new GridLayout(1, 3));
 
+        final EventListener listener = new EventListener();
         Button button = new Button("悔棋");
-        button.addActionListener(my);
+        button.addActionListener(listener);
         Button computerMove = new Button("立即走棋");
-        computerMove.addActionListener(my);
+        computerMove.addActionListener(listener);
         control.add(button);
         control.add(computerMove);
         this.add(control, BorderLayout.SOUTH);
 
-        this.addWindowListener(my);
+        this.addWindowListener(listener);
         this.setJMenuBar(setJMenuBar());
 
         this.setSize(568, 710);
@@ -135,7 +136,6 @@ public final class Board extends JFrame {
         this.setVisible(true);
     }
 
-    private final MenuItemActionListener menuItemAction = new MenuItemActionListener();
     JRadioButtonMenuItem hashSize2M = new JRadioButtonMenuItem("HASH表小", true);
     JRadioButtonMenuItem hashSize32M = new JRadioButtonMenuItem("HASH表中", false);
     JRadioButtonMenuItem hashSize64M = new JRadioButtonMenuItem("HASH表大", false);
@@ -159,6 +159,8 @@ public final class Board extends JFrame {
         group.add(mi_9);
         group.add(mi_10);
         group.add(mi_11);
+
+        final MenuItemActionListener menuItemAction = new MenuItemActionListener();
         create.addActionListener(menuItemAction);
         save.addActionListener(menuItemAction);
         mi_6.addActionListener(menuItemAction);
@@ -247,172 +249,6 @@ public final class Board extends JFrame {
         lastTimeCheckedSite = moveNode.destSite;
     }
 
-    class ButtonActionListener implements ActionListener, WindowListener, MouseListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            Button sour = (Button) e.getSource();
-            if (sour.getLabel().equals("悔棋")) {
-                if (moveHistory.getMoveNode() != null) {
-                    MoveNode moveNode = moveHistory.getMoveNode();
-                    unMoveNode(moveNode);
-                    moveHistory = moveHistory.getLastLink();
-                    turn_num--;
-                    play = 1 - play; //交换双方
-                }
-            } else if (sour.getLabel().equals("立即走棋")) {
-                if (_AIThink != null) {
-                    _AIThink.setStop();
-                }
-            }
-        }
-
-        private boolean checkZFPath(int srcSite, int destSite, int play) {
-            if (chessParamCont.board[srcSite] == NOTHING) {
-                return false;
-            }
-//			int row=chessParamCont.boardBitRow[boardRow[srcSite]];
-//			int col=chessParamCont.boardBitCol[boardCol[srcSite]];
-			/*BitBoard bt = BitBoard.assignXorToNew(GunBitBoardOfFakeAttackRow[srcSite][row],GunBitBoardOfFakeAttackCol[srcSite][col]);
-			System.out.println(chessParamCont.maskBoardChesses);
-			System.out.println("============炮伪攻击的位置==========");
-			System.out.println(bt);*/
-//			System.out.println("车或炮的机动性为->>"+(ChariotAndGunMobilityRow[srcSite][row]+ChariotAndGunMobilityCol[srcSite][col]));
-
-            MoveNode moveNode = new MoveNode(srcSite, destSite, chessParamCont.board[srcSite], chessParamCont.board[destSite], 0);
-            return cmp.legalMove(play, moveNode);
-        }
-
-        private void unMoveNode(MoveNode moveNode) {
-            MoveNode unmoveNode = new MoveNode();
-            unmoveNode.srcChess = moveNode.destChess;
-            unmoveNode.srcSite = moveNode.destSite;
-            unmoveNode.destChess = moveNode.srcChess;
-            unmoveNode.destSite = moveNode.srcSite;
-            unMove(unmoveNode);
-            cmp.unMoveOperate(moveNode);
-        }
-
-        private void unMove(MoveNode moveNode) {
-            if (lastTimeCheckedSite != -1) {
-                setBoardIconUnchecked(lastTimeCheckedSite, chessParamCont.board[lastTimeCheckedSite]);
-            }
-            if (moveNode.srcChess == NOTHING) {
-                buttons[moveNode.srcSite].setIcon(null);
-            } else {
-                setBoardIconUnchecked(moveNode.srcSite, moveNode.srcChess);
-            }
-            if (moveNode.destChess == NOTHING) {
-                buttons[moveNode.destChess].setIcon(null);
-            } else {
-                setBoardIconChecked(moveNode.destSite, moveNode.destChess);
-            }
-            lastTimeCheckedSite = moveNode.destSite;
-        }
-
-        @Override
-        public void windowActivated(WindowEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void windowClosed(WindowEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void windowClosing(WindowEvent arg0) {
-            // TODO Auto-generated method stub
-            System.exit(1);
-        }
-
-        @Override
-        public void windowDeactivated(WindowEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void windowDeiconified(WindowEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void windowIconified(WindowEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void windowOpened(WindowEvent arg0) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void mouseClicked(MouseEvent e) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void mouseEntered(MouseEvent e) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-            // TODO Auto-generated method stub
-        }
-
-        @Override
-        public void mousePressed(MouseEvent e) {
-            if (android[play]) {
-                return;
-            }
-            for (int i = 0; i < buttons.length; i++) {
-                JLabel p = buttons[i];
-                if (p == e.getSource()) {
-                    if (chessParamCont.board[i] != NOTHING && (chessParamCont.board[i] & chessPlay[play]) == chessPlay[play]) {//自方子力
-                        if (i != begin) {
-                            begin = i;
-
-                            setBoardIconChecked(i, chessParamCont.board[i]);
-                            if (lastTimeCheckedSite != -1) {
-                                setBoardIconUnchecked(lastTimeCheckedSite, chessParamCont.board[lastTimeCheckedSite]);
-                            }
-                            lastTimeCheckedSite = begin;
-                        }
-                        return;
-                    } else if (begin == -1) {
-                        return;
-                    }
-                    end = i;
-                    if (this.checkZFPath(begin, end, play)) {
-                        MoveNode moveNode = new MoveNode(begin, end, chessParamCont.board[begin], chessParamCont.board[end], 0);
-                        showMoveNode(moveNode);
-                        NodeLink nextLink = new NodeLink(play, transTable.boardZobrist32, transTable.boardZobrist64);
-                        nextLink.setMoveNode(moveNode);
-                        moveHistory.setNextLink(nextLink);
-                        moveHistory = moveHistory.getNextLink();
-                        begin = -1;
-                        opponentMove();
-                    }
-                }
-            }
-
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-            // TODO Auto-generated method stub
-
-        }
-    }
-
     public void gameOverMsg(String msg) {
         if (JOptionPane.showConfirmDialog(this, msg + "是否继续？", "信息",
                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
@@ -478,79 +314,19 @@ public final class Board extends JFrame {
             isGameOver = true;
         }
         if (isGameOver) {
-            launchSound(SoundEffect.LOSS_SOUND);
+            launchSound(Constant.LOSS_SOUND);
             gameOverMsg(msg);
         } else {
             MoveNode moveNode = moveHistory.getMoveNode();
             if (cmp.checked(1 - play)) {//对手是否被将
-                launchSound(SoundEffect.CHECKED_SOUND);
+                launchSound(Constant.CHECKED_SOUND);
             } else if (moveNode.destChess != NOTHING) {
-                launchSound(SoundEffect.CAPTURE_SOUND);
+                launchSound(Constant.CAPTURE_SOUND);
             } else {
-                launchSound(SoundEffect.MOVE_SOUND);
+                launchSound(Constant.MOVE_SOUND);
             }
         }
         return isGameOver;
-    }
-
-    class MenuItemActionListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            String actionCommand = e.getActionCommand();
-            if ("新建".equals(actionCommand)) {
-                dispose();
-                new ChessBoardMain();
-            } else if ("保存".equalsIgnoreCase(actionCommand)) {
-                Tools.saveFEN(chessParamCont.board, moveHistory);
-            } else if ("菜鸟".equals(actionCommand)) {
-                computerLevel = ComputerLevel.greenHand;
-            } else if ("入门".equals(actionCommand)) {
-                computerLevel = ComputerLevel.introduction;
-            } else if ("业余".equals(actionCommand)) {
-                computerLevel = ComputerLevel.amateur;
-            } else if ("专家".equals(actionCommand)) {
-                computerLevel = ComputerLevel.career;
-            } else if ("大师".equals(actionCommand)) {
-                computerLevel = ComputerLevel.master;
-            } else if ("无敌".equals(actionCommand)) {
-                computerLevel = ComputerLevel.invincible;
-            } else if ("电脑红方".equals(actionCommand)) {
-                android[REDPLAYSIGN] = !android[REDPLAYSIGN];
-                if (android[REDPLAYSIGN] && (REDPLAYSIGN == play || turn_num <= 0)) {
-                    if (turn_num <= 0) {
-                        play = REDPLAYSIGN;
-                        moveHistory.play = 1 - REDPLAYSIGN;
-                    }
-                    computeThinkStart();
-                }
-            } else if ("电脑黑方".equals(actionCommand)) {
-                android[BLACKPLAYSIGN] = !android[BLACKPLAYSIGN];
-                if (android[BLACKPLAYSIGN] && (BLACKPLAYSIGN == play || turn_num <= 0)) {
-                    if (turn_num <= 0) {
-                        play = BLACKPLAYSIGN;
-                        moveHistory.play = 1 - BLACKPLAYSIGN;
-                    }
-                    computeThinkStart();
-                }
-            } else if ("HASH表小".equals(actionCommand)) {
-                if (turn_num == 0) {
-                    TranspositionTable.setHashSize(0x7FFFF);
-                }
-            } else if ("HASH表中".equals(actionCommand)) {
-                if (turn_num == 0) {
-                    TranspositionTable.setHashSize(0xFFFFF);
-                }
-            } else if ("HASH表大".equals(actionCommand)) {
-                if (turn_num == 0) {
-                    TranspositionTable.setHashSize(0x1FFFFF);
-                }
-            } else if ("后台思考".equals(actionCommand)) {
-                isBackstageThink = !isBackstageThink;
-            } else if ("音效".equals(actionCommand)) {
-                isSound = !isSound;
-            }
-        }
-
     }
 
     private void opponentMove() {
@@ -669,48 +445,6 @@ public final class Board extends JFrame {
     public void launchSound(int type) {
         if (isSound) { //开启音效
             new SoundEffect(type).start();
-        }
-    }
-
-    private static final String movePathPath = "/sounds/MOVE.WAV";
-    private static final String checkedPath = "/sounds/CHECKED.WAV";
-    private static final String capturePath = "/sounds/CAPTURE.WAV";
-    private static final String lossPath = "/sounds/LOSS.WAV";
-    private static final URL MOVEPATHURL = ChessBoardMain.class.getResource(movePathPath);
-    private static final URL CHECKEDURL = ChessBoardMain.class.getResource(checkedPath);
-    private static final URL CAPTUREURL = ChessBoardMain.class.getResource(capturePath);
-    private static final URL LOSSURL = ChessBoardMain.class.getResource(lossPath);
-
-    class SoundEffect extends Thread {
-        public final static int MOVE_SOUND = 1;
-        public final static int CAPTURE_SOUND = 2;
-        public final static int CHECKED_SOUND = 3;
-        public final static int LOSS_SOUND = 4;
-
-        URL url = null;
-
-        public SoundEffect(int k) {
-            this.setDaemon(true);
-            switch (k) {
-                case MOVE_SOUND:
-                    url = MOVEPATHURL;
-                    break;
-                case CAPTURE_SOUND:
-                    url = CAPTUREURL;
-                    break;
-                case CHECKED_SOUND:
-                    url = CHECKEDURL;
-                    break;
-                case LOSS_SOUND:
-                    url = LOSSURL;
-                    break;
-            }
-        }
-
-        @Override
-        public void run() {
-            AudioClip clip = Applet.newAudioClip(url);
-            clip.play();
         }
     }
 }
